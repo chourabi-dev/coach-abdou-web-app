@@ -1,3 +1,20 @@
+/*@font-face {
+  font-family: 'main';
+  src: url(./AgencyFB.ttf); 
+  }
+
+
+body {
+  margin: 0; 
+  font-family: 'main';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button, label{
+  font-family: 'main' !important;;
+}*/
+
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -7,7 +24,32 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+
+.super-set-ball{
+  background-color: #ff8c8c;
+    height: 15px;
+    width: 15px;
+    border-radius: 50%;
+    margin-right: 5px;
+    margin-top: 5px;
+}
+
+.seper-set-badge{
+  background-color: #fb4040;
+    color: white;
+    width: -moz-fit-content;
+    width: fit-content;
+    border-radius: 7px;
+    padding: 2px 8px;
+}
+
+.text-right{
+  text-align: right;
 }

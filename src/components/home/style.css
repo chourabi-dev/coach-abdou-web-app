@@ -1,0 +1,22 @@
+.avatar-loader{
+    height: 100%;
+    width: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-photo-button{
+    position: absolute;
+    
+    right: -15px;
+    top: 0;
+
+    background-color: white;
+    border-radius: 50%;
+    height: 35px;
+    width: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
