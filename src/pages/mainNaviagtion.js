@@ -5,8 +5,10 @@ import RestoreIcon from '@mui/icons-material/Restore';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import BarChart from '@mui/icons-material/BarChart';
 import HomePage from './home'; 
+import NotificationPage from './notifications';
+
 import ComparatorPage from './comparator';
-import { CompareArrows, Home } from '@mui/icons-material';
+import { CompareArrows, Home, NotificationImportant } from '@mui/icons-material';
 import ProgressPage from './progress';
 
 export default function MainNavigationPage(){
@@ -26,6 +28,10 @@ export default function MainNavigationPage(){
                 {
                     value == 2 ? <ProgressPage /> : null
                 } 
+                {
+                    value == 3 ? <NotificationPage /> : null
+                } 
+                
             </div>
 
 
@@ -42,6 +48,8 @@ export default function MainNavigationPage(){
                 <BottomNavigationAction label="Home" icon={<Home />} />
                 <BottomNavigationAction label="Comparator" icon={<CompareArrows />} />
                 <BottomNavigationAction label="Progress" icon={<BarChart />} />
+                <BottomNavigationAction label="Notifications"  icon={<NotificationImportant />} />
+                
             </BottomNavigation>
             
         </div>

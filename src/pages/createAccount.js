@@ -90,7 +90,7 @@ export default function CreateAccountPage() {
         redirect: 'follow'
         };
 
-        fetch(PUBLIC_URL+"/API/mobile/signUpUser/index.php", requestOptions)
+        fetch(PUBLIC_URL+"/api/v1/create-user-account", requestOptions)
         .then(response => response.json())
         .then(result =>{
             if (result.success === false) {

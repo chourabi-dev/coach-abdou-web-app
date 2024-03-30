@@ -31,38 +31,28 @@ export default function DietPage(){
 
     const getUserData = function(){
         var myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("gympro-token", "yytgsfrahjuiplns2sutags4poshn1");
-        
-        var raw = JSON.stringify({"token":localStorage.getItem("token")});
+        myHeaders.append("Content-Type", "application/json"); 
+        myHeaders.append("Authorization",  localStorage.getItem("token") ); 
         
         var requestOptions = {
-          method: 'POST',
-          headers: myHeaders,
-          body: raw,
+          method: 'GET',
+          headers: myHeaders, 
           redirect: 'follow'
         };
-        
-        fetch(PUBLIC_URL+"/API/mobile/getUserData/index.php", requestOptions)
+ 
+        fetch(PUBLIC_URL+"/api/v1/get-member-data", requestOptions)
           .then(response => response.json())
           .then(result => {
-            setUser(result.data);
+            setUser(result); 
 
             
-
-            const dietPlanJSON = JSON.parse(result.dietPlan.data_duplication);
-            console.log(dietPlanJSON); 
-
-            setDiet(dietPlanJSON)
+            setDiet(result.diet);
 
 
         
         })
           .catch(error =>{
-            alert("Session expired");
-            
-            localStorage.removeItem("token");
-            window.location="/";
+             
             
           }).finally(()=>{
             setIsLoading(false);
@@ -106,19 +96,20 @@ export default function DietPage(){
                             
 
                                     <p className="text-muted">
-                                        <strong>{ diet.info.title }</strong> <br />
-                                        
-                                        <span style={ {whiteSpace:"pre-line" } }>{diet.info.note}</span>
+                                        <strong>{ diet.name }</strong> <br /> 
+                                        <span style={ {whiteSpace:"pre-line" } }>{diet.descreption}</span>
                                     </p>
 
 
                                     <div>
                                         {
-                                            diet.meals.map((meal,index)=>{
+ 
+
+                                        Object.values(diet.meals) .map((meal,index)=>{
                                                 return(
                                                     <div style={ { borderBottom:'1px solid #d2d2d2' } } key={index}>
                                                         <h3>Meal N° : {index +1} </h3>
-                                                        <p className="text-muted" style={ {whiteSpace:"pre-line"} }>{meal.description}</p>
+                                                        <p className="text-muted" style={ {whiteSpace:"pre-line"} }>{meal}</p>
                                                         
                                                     </div>
                                                 );

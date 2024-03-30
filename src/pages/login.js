@@ -74,7 +74,7 @@ export default function SiginPage() {
         redirect: 'follow'
         };
 
-        fetch(PUBLIC_URL+"/API/mobile/SignInUser/index.php", requestOptions)
+        fetch(PUBLIC_URL+"/api/v1/login", requestOptions)
         .then(response => response.json())
         .then(result =>{
             if (result.success === false) {

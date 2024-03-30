@@ -22,7 +22,7 @@ export default function CreateProgressPage(){
     
     const [isLoading,setIsLoading] = useState(true);
 
-    const [user,setUser] = useState(null);
+    const [user,setUser] = useState({});
     
     const [weight,setWeight] = useState("");
     const [size,setSize] = useState("");
@@ -52,31 +52,25 @@ export default function CreateProgressPage(){
 
     const getUserData = function(){
         var myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("gympro-token", "yytgsfrahjuiplns2sutags4poshn1");
-        
-        var raw = JSON.stringify({"token":localStorage.getItem("token")});
+        myHeaders.append("Content-Type", "application/json"); 
+        myHeaders.append("Authorization",  localStorage.getItem("token") ); 
+         
         
         var requestOptions = {
-          method: 'POST',
+          method: 'GET',
           headers: myHeaders,
-          body: raw,
           redirect: 'follow'
         };
         
-        fetch(PUBLIC_URL+"/API/mobile/getUserData/index.php", requestOptions)
+        fetch(PUBLIC_URL+"/api/v1/get-member-data", requestOptions)
           .then(response => response.json())
           .then(result => {
             console.log(result); 
-            setUser(result.data)  
+            setUser(result)  
          
         })
           .catch(error =>{
-           /* alert("Session expired");
-            
-            localStorage.removeItem("token");
-            window.location="/";*/
-            
+            setUser(null)
           }).finally(()=>{
             setIsLoading(false);
           })
@@ -142,8 +136,10 @@ export default function CreateProgressPage(){
     const startUploading = function(){
         setLoading(true)
         var myHeaders = new Headers();
-        myHeaders.append("gympro-token", "yytgsfrahjuiplns2sutags4poshn1");
-        
+        myHeaders.append("Authorization",  localStorage.getItem("token") ); 
+
+
+         
         var formdata = new FormData();
         formdata.append("front", frontFile, frontFile.name);
         formdata.append("back", backFile, backFile.name);
@@ -165,7 +161,7 @@ export default function CreateProgressPage(){
           redirect: 'follow'
         };
         
-        fetch(PUBLIC_URL+"/API/mobile/upload-progress/index.php", requestOptions)
+        fetch(PUBLIC_URL+"/api/v1/upload-member-progress", requestOptions)
           .then(response => response.json())
           .then(result =>{
             if (result.success === true) {

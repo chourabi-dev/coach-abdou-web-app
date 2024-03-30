@@ -13,27 +13,55 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import { Camera, CameraEnhance, CameraFront, Edit, EditAttributes, EditNote, Email, ExitToApp, ExitToAppOutlined, Phone, Photo } from '@mui/icons-material';
+import { Camera, CameraEnhance, CameraFront, Edit, EditAttributes, EditNote, Email, ExitToApp, ExitToAppOutlined, NotificationImportant, Phone, Photo } from '@mui/icons-material';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import './style.css';
 import { Link } from 'react-router-dom';
 
 export default function ConnectedUserCard(props){
+    const PUBLIC_URL = process.env.REACT_APP_URL;
+
+
     const user = props.data;
 
-    const plan_duration = user.duration_days;
-    const last_renewal_date = user.last_renewal_date;
+    const payment = user.payment;
+    const last_renewal_date = user.subscribtion_date;
     const [passedDays,setPassedDays] = useState(0);
+
+
     const [ logoutDialog, setLogoutDialog ] = useState(false);
     const [avatarURL,setAvatarURL] = useState(null);
 
     const [uploading,setUploading] =useState(false);
 
+    const [notifications,setNotifictaions] = useState(0);
+
+    
+
     useEffect(()=>{ 
         setPassedDays(countDays())
-        setAvatarURL(user.avatar_member);
+        setAvatarURL(user.photoURL);
+
+        if (user.notifications) {
+            setNotifictaions( user.notifications.filter(n=>n.opened == false).length )
+        }
+        
+        closeParentIFOutOfPayment()
     },[])
+
+
+
+    function closeParentIFOutOfPayment(){
+        
+        
+        if (payment != null) {
+            if (    (payment.duration - countDays())  <= 0     ) {
+                props.stopAppFn(true);
+            
+            }
+        }
+    }
 
 
     function getLeftWeeks(){
@@ -42,15 +70,13 @@ export default function ConnectedUserCard(props){
     }
 
     function getTotalWeeks() {
-        return Math.round(plan_duration / 7);
+        return Math.round(payment.duration / 7);
     }
     
 
 
-    const countDays = function(){
-        console.log(last_renewal_date);
-
-
+    const countDays = function(){ 
+       if (last_renewal_date != null) {
         const year = parseInt(last_renewal_date.substring(0, 4));
         const month = parseInt(last_renewal_date.substring(5, 7));
         const days = parseInt(last_renewal_date.substring(8, 10));
@@ -62,8 +88,12 @@ export default function ConnectedUserCard(props){
         // transform them into days now
         const daysPassed = (differenceInMilliseconds / (1000 * 60 * 60 * 24));
         const exactPassedDays = Math.round(daysPassed);
-
         return exactPassedDays;
+
+       }else{
+        return 0;
+       }
+        
 
     }
 
@@ -88,14 +118,12 @@ export default function ConnectedUserCard(props){
         console.log(file);
 
         
-        var myHeaders = new Headers();
-        //myHeaders.append("Content-Type", "multipart/form-data");
-        myHeaders.append("gympro-token", "yytgsfrahjuiplns2sutags4poshn1");
+        var myHeaders = new Headers(); 
+        myHeaders.append("Authorization",  localStorage.getItem("token") ); 
         
         var formdata = new FormData();
-        formdata.append("profile", file, file.name);
-        formdata.append("token", localStorage.getItem("token"));
-        
+        formdata.append("profile", file, file.name); 
+
         var requestOptions = {
           method: 'POST',
           headers: myHeaders,
@@ -103,7 +131,7 @@ export default function ConnectedUserCard(props){
           redirect: 'follow'
         };
         
-        fetch("http://coach-abdou.com/API/mobile/update-profile-picture/index.php", requestOptions)
+        fetch(PUBLIC_URL+'/api/v1/update-member-photo', requestOptions)
           .then(response => response.json())
           .then(result => console.log(result))
           .catch(error => console.log('error', error)).finally(()=>{
@@ -156,98 +184,122 @@ export default function ConnectedUserCard(props){
                         </div>
 
                         <div className='pt-2'>
-                            <h3 className='text-center mt-auto mb-auto' style={{textTransform:'capitalize'}}>{user.fullname_member}</h3>
-                            <p className='text-center text-muted mt-auto mb-auto' ><Email sx={{fontSize:13}} /> {user.email_member}</p>
-                            <p className='text-center text-muted mt-auto ' ><Phone sx={{fontSize:13}} /> {user.phone_member}</p>
+                            <h3 className='text-center mt-auto mb-auto' style={{textTransform:'capitalize'}}>{user.fullname}</h3>
+                            <p className='text-center text-muted mt-auto mb-auto' ><Email sx={{fontSize:13}} /> {user.email}</p>
+                            <p className='text-center text-muted mt-auto ' ><Phone sx={{fontSize:13}} /> {user.phone}</p>
                                                 
-                                            
+
+                            {
+                                notifications != 0 ?
+                                <p className='text-center text-danger mt-auto ' ><NotificationImportant fontSize='20' sx={{fontSize:13}} /> {notifications} new notifictaion(s)</p>
+                                 : null
+                            }               
+
+                              
                         </div>    
                                 
                     </div>
 
+
+
                     <div>
                     {
-                                ( (plan_duration - passedDays) > 0) ?
+                        
+                        payment != null ? 
+                        <div>
+                             {
+                                ( (payment.duration - passedDays) > 0)     ?
 
-                                        <div>
-                                            
-
-                                            <div>
-                                                <div className='text-muted text-center mb-2'>Weeks( { getLeftWeeks() } / { getTotalWeeks() } )</div>
-                                                <LinearProgress variant="determinate" value={ progressValue() } />
-                                            </div>
-
-                                            
-                                            <div className="row">
-                                                <div className="col ">
-                                                    <div className="mt-2">
-                                                        <Link to={ '/profile/edit' }><Button size="small"   className='w-100' variant="outlined" style={{borderRadius:'30px'}}><EditNote /> Edit profile </Button></Link>
-                                                
-                                                    </div>
-                                                </div>
-                                                <div className="col">
-                                                <div className='mt-2'>
-                                                <Button size="small"  onClick={()=>{
-                                                    setLogoutDialog(true);
-                                                }} className='w-100' variant="outlined" style={{borderRadius:'30px'}}><ExitToAppOutlined color='error' /> Logout </Button>
-                                            
-
-
-
-                                            <Dialog
-                                                    open={ logoutDialog } 
-                                                    aria-labelledby="alert-dialog-title"
-                                                    aria-describedby="alert-dialog-description"
-                                                >
-                                                    <DialogTitle id="alert-dialog-title">
-                                                        {"Close account ?"}
-                                                    </DialogTitle>
-                                                    <DialogContent>
-                                                    <DialogContentText id="alert-dialog-description">
-                                                        Do you really want to close this session and disconnect from the app ?
-
-                                                    </DialogContentText>
-                                                    </DialogContent>
-                                                    <DialogActions>
-                                                    <Button onClick={()=>{
-                                                        setLogoutDialog(false)
-                                                    }}>Close</Button>
-                                                    <Button color='error' onClick={()=>{
-                                                        setLogoutDialog(false)
-                                                        localStorage.clear();
-                                                        window.location="/";
-
-                                                    }} autoFocus>
-                                                         Logout
-                                                    </Button>
-                                                    </DialogActions>
-                                                </Dialog>
-                                                
-                                            
-                                            </div>
-                                            
-                                                </div>
-                                            </div>
-                                            
-                                             
-                                          
-
-                                        </div>
-                                        : 
-                                        <div>
-                                            <div className='expired-account'>
-                                                <Alert severity="error">
-                                                    Your subscription has been expired, please contact your coach for more informations.
-                                                </Alert>
-                                            </div>
-                                            
-                                        </div>
+                                <div>
+                                    
+                                
+                                    <div>
+                                        <div className='text-muted text-center mb-2'>Weeks( { getLeftWeeks() } / { getTotalWeeks() } )</div>
+                                        <LinearProgress variant="determinate" value={ progressValue() } />
+                                    </div>
+                                
+                                </div>
+                                : 
+                                <div>
+                                    <div className='expired-account'>
+                                        <Alert severity="error">
+                                            Your subscription has been expired, please contact your coach for more informations.
+                                        </Alert>
+                                    </div>
+                                    
+                                </div>
+                             }
 
 
-                                        
-                                    }
+ 
 
+                        </div>
+                        :
+                        <div>
+                            <Alert severity="error">
+                                        Your subscription has been expired, please contact your coach for more informations.
+                                    </Alert>
+                        </div>
+
+
+                    }
                     </div>
+
+
+
+
+                    <div className="row">
+                        <div className="col ">
+                            <div className="mt-2">
+                                <Link to={ '/profile/edit' }><Button size="small"   className='w-100' variant="outlined" style={{borderRadius:'30px'}}><EditNote /> Edit profile </Button></Link>
+                        
+                            </div>
+                        </div>
+                        <div className="col">
+                        <div className='mt-2'>
+                        <Button size="small"  onClick={()=>{
+                            setLogoutDialog(true);
+                        }} className='w-100' variant="outlined" style={{borderRadius:'30px'}}><ExitToAppOutlined color='error' /> Logout </Button>
+                    
+
+
+
+                    <Dialog
+                            open={ logoutDialog } 
+                            aria-labelledby="alert-dialog-title"
+                            aria-describedby="alert-dialog-description"
+                        >
+                            <DialogTitle id="alert-dialog-title">
+                                {"Close account ?"}
+                            </DialogTitle>
+                            <DialogContent>
+                            <DialogContentText id="alert-dialog-description">
+                                Do you really want to close this session and disconnect from the app ?
+
+                            </DialogContentText>
+                            </DialogContent>
+                            <DialogActions>
+                            <Button onClick={()=>{
+                                setLogoutDialog(false)
+                            }}>Close</Button>
+                            <Button color='error' onClick={()=>{
+                                setLogoutDialog(false)
+                                localStorage.clear();
+                                window.location="/";
+
+                            }} autoFocus>
+                                    Logout
+                            </Button>
+                            </DialogActions>
+                        </Dialog>
+                        
+                    
+                        </div>
+                    
+                        </div>
+                    </div>
+
+                    
                 
              
             </div>

@@ -12,6 +12,7 @@ import firebase from 'firebase/compat/app';
 
 import 'firebase/compat/messaging';
 import { Navigate } from "react-router-dom";
+import { Alert } from "@mui/material";
 
 
 export default function HomePage(){
@@ -30,51 +31,44 @@ export default function HomePage(){
      
     const [newAccountCreated,setFirstWeekdUpdate] = useState( localStorage.getItem("new-account-created") );
     
+
+
+    
+    const [subscriptionEnd,setSubscriptionEnd] = useState(false);
      
+
+    
  
                 
     
 
     const getUserData = function(){
         var myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("gympro-token", "yytgsfrahjuiplns2sutags4poshn1");
-        
-        var raw = JSON.stringify({"token":localStorage.getItem("token")});
+        myHeaders.append("Content-Type", "application/json"); 
+        myHeaders.append("Authorization",  localStorage.getItem("token") ); 
         
         var requestOptions = {
-          method: 'POST',
-          headers: myHeaders,
-          body: raw,
+          method: 'GET',
+          headers: myHeaders, 
           redirect: 'follow'
         };
         
-        fetch(PUBLIC_URL+"/API/mobile/getUserData/index.php", requestOptions)
+        fetch(PUBLIC_URL+"/api/v1/get-member-data", requestOptions)
           .then(response => response.json())
           .then(result => {
-            console.log(result);
+            console.log(result); 
+            setUser(result) 
 
-            setDiet(result.dietPlan);
+            
             setWorkout(result.workout);
-            setUser(result.data)
-
-           /* user = body['data'];
-        payments = body['payments'];
-        _notifications = body['notifications'];
-        _reclamtions = body['reclamations']; */
-
-
-        
-
-
-
+            setDiet(result.diet);
         
         })
           .catch(error =>{
-            alert("Session expired");
+            /*alert("Session expired");
             
             localStorage.removeItem("token");
-            window.location="/";
+            window.location="/";*/
             
           }).finally(()=>{
             setIsLoading(false);
@@ -119,19 +113,19 @@ export default function HomePage(){
                   // Send the token to your server for storing and targeting notifications
       
                   var myHeaders = new Headers();
-                  myHeaders.append("Content-Type", "application/json");
-                  myHeaders.append("gympro-token", "yytgsfrahjuiplns2sutags4poshn1");
-      
-                  var raw = JSON.stringify({"token":localStorage.getItem('token') ,"fcm": currentToken });
-      
+                  myHeaders.append("Content-Type", "application/json"); 
+                  myHeaders.append("Authorization",  localStorage.getItem("token") ); 
+                  
+                  var raw = JSON.stringify({ "fcm":currentToken });
+          
                   var requestOptions = {
                   method: 'POST',
                   headers: myHeaders,
                   body: raw,
                   redirect: 'follow'
                   };
-      
-                  fetch(PUBLIC_URL+"/API/mobile/saveFCMMember/index.php", requestOptions)
+          
+                  fetch(PUBLIC_URL+"/api/v1/update-account-fcm", requestOptions)
                   .then(response => response.json())
                   .then(result => console.log(result))
                   .catch(error => console.log('error', error));
@@ -195,13 +189,27 @@ export default function HomePage(){
                                 <div className="app">
                                     <SocialMediaBloc />
 
-                                    <ConnectedUserCard data={user} />
+                                      <ConnectedUserCard data={user} stopAppFn={ setSubscriptionEnd } />
 
                                     
-
-                                    { diet != null ? <DietBloc  /> : null }
-                                    { workout != null ? <WorkoutBloc />  : null }
-                                    <WeeklyUpdateBloc />
+                                      {
+                                        subscriptionEnd == true ? 
+                                        <div className="mt-5 mb-5">
+                                          <Alert severity="error">
+                                              Your subscription has been expired, please contact your coach for more informations.
+                                          </Alert>
+                                        </div>
+                                        :
+                                        <div>
+                                          { diet != null ? <DietBloc  /> : null }
+                                          {  workout != null ? <WorkoutBloc />  : null }
+                                          <WeeklyUpdateBloc />
+                                        </div>
+                                      }
+                                      
+                                      
+                                      
+                                    
                                      
                                     {( diet == null && workout == null )? <NothingToShowBloc /> : null }
 

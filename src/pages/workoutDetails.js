@@ -6,7 +6,7 @@ import ConnectedUserCard from "../components/home/connectedUserCard";
 import ErrorPage from "./error";
 import { Link, Navigate, json } from "react-router-dom";
 import { ArrowBack, ArrowRight, ArrowRightAlt, ArrowRightAltOutlined, ArrowRightRounded, ArrowRightSharp, ArrowRightTwoTone, BoyRounded, Delete, FitnessCenter, FolderSpecialOutlined, Interests, LockClock, MarkAsUnread, MonitorHeart } from "@mui/icons-material";
-import { Avatar, IconButton, List, ListItem, ListItemAvatar, ListItemText } from "@mui/material";
+import { Alert, Avatar,Button, IconButton, List, ListItem, ListItemAvatar, ListItemText, TextField } from "@mui/material";
 
 
 
@@ -31,6 +31,11 @@ export default function WorkoutPage(){
     const [exercices,setExercices] = useState([]);
     const [day,setDay] = useState("");
     const [navigateToList,setNavigateToList] = useState(false);
+
+    const [loading,setLoading] = useState(false);
+    const [feedback,setFeedBack] = useState("");
+    const [successMessage,setSuccessMessage] = useState("");
+    const [errorMessage,setErrorMessage] = useState("");
     
     
     
@@ -42,38 +47,32 @@ export default function WorkoutPage(){
 
     const getUserData = function(){
         var myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("gympro-token", "yytgsfrahjuiplns2sutags4poshn1");
-        
-        var raw = JSON.stringify({"token":localStorage.getItem("token")});
+        myHeaders.append("Content-Type", "application/json"); 
+        myHeaders.append("Authorization",  localStorage.getItem("token") ); 
         
         var requestOptions = {
-          method: 'POST',
-          headers: myHeaders,
-          body: raw,
+          method: 'GET',
+          headers: myHeaders, 
           redirect: 'follow'
         };
         
-        fetch(PUBLIC_URL+"/API/mobile/getUserData/index.php", requestOptions)
+        fetch(PUBLIC_URL+"/api/v1/get-member-data", requestOptions)
           .then(response => response.json())
           .then(result => {
-            setUser(result.data);
+            setUser(result);
+            setFeedBack(result.workout_feedback);
 
-
-            const workoutDetails = JSON.parse(result.workout.json_workout);
-
-             
-            console.log(workoutDetails);
-
-            setWorkoutDetials(workoutDetails)
+            console.log(result.workout);
+ 
+            setWorkoutDetials(result.workout)
 
         
         })
           .catch(error =>{
-            alert("Session expired");
+            /*alert("Session expired");
             
             localStorage.removeItem("token");
-            window.location="/";
+            window.location="/";*/
             
           }).finally(()=>{
             setIsLoading(false);
@@ -86,6 +85,40 @@ export default function WorkoutPage(){
     },[])
 
 
+
+ 
+
+    const saveFeedBack = function(){
+        setLoading(true)
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json"); 
+        myHeaders.append("Authorization",  localStorage.getItem("token") ); 
+        
+        
+        var requestOptions = {
+          method: 'POST',
+          headers: myHeaders,
+          body: JSON.stringify({ feedback: feedback }),
+          redirect: 'follow'
+        };
+        
+        fetch(PUBLIC_URL+"/api/v1/update-workout-feedback", requestOptions)
+          .then(response => response.json())
+          .then(result =>{
+            if (result.success === true) {
+                
+                setSuccessMessage(result.message); 
+                
+            } else {
+                setErrorMessage(result.message);
+            }
+          } )
+          .catch(error => {
+            setErrorMessage("Something went wrong, please try again.")
+          }).finally(()=>{
+                setLoading(false);
+          });
+    }
 
 
     return(
@@ -120,23 +153,19 @@ export default function WorkoutPage(){
                                     <h1 className="mt-3"><Link to={ '/home' } className="text-secondary"><ArrowBack /></Link> Workout</h1>
                             
                                     <h3 style={{textTransform:'capitalize'}} >{ workoutDetails.title }</h3>
+                                    <p className="text-muted">
+                                        { workoutDetails.goal }
+                                    </p>
  
                                     <table className="w-100">
                                         <tbody>
-                                            <tr>
-                                                <td>
-                                                    <strong className="text-muted">Goal :</strong> 
-                                                </td>
-                                                <td> 
-                                                    <p className="text-muted mb-0">{ workoutDetails.goal }</p>
-                                                </td>
-                                            </tr>
+                                             
                                             <tr>
                                                 <td>
                                                     <strong className="text-muted">Body section :</strong> 
                                                 </td>
                                                 <td> 
-                                                    <p className="text-muted mb-0">{ workoutDetails.bodysection }</p>
+                                                    <p className="text-muted mb-0">{ workoutDetails.body_section }</p>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -151,16 +180,18 @@ export default function WorkoutPage(){
                                     </table> 
                                     <hr />
 
- 
 
+
+
+                                    
                                     <List dense={false}  >
                                          
                                         <ListItem  secondaryAction={ 
-                                                workoutDetails.program.monday != null ?
+                                               workoutDetails.monday != null ?
                                                     <IconButton edge="end" aria-label="delete" onClick={()=>{
                                                         
                                                         setDay("Monday");
-                                                        setExercices(workoutDetails.program.monday.exercices); 
+                                                        setExercices(workoutDetails.monday); 
                                                         setNavigateToList(true);
 
 
@@ -173,11 +204,11 @@ export default function WorkoutPage(){
                                             }  > 
                                             <ListItemAvatar>
                                                 {
-                                                    workoutDetails.program.monday == null ?
+                                                   workoutDetails.monday == null ?
                                                     <Interests  color="success" />
                                                     :
 
-                                                    workoutDetails.program.monday.split == 'cardio' ?
+                                                   workoutDetails.monday.split == 'cardio' ?
                                                     <MonitorHeart  color="error" />:<FitnessCenter color="primary" />
 
                                                  
@@ -186,7 +217,7 @@ export default function WorkoutPage(){
                                             </ListItemAvatar>
                                             <ListItemText
                                             primary="Monday"
-                                            secondary={  workoutDetails.program.monday != null ? workoutDetails.program.monday.split  : 'Rest day' }
+                                            secondary={ workoutDetails.monday != null ?workoutDetails.monday.split  : 'Rest day' }
                                             />
                                         </ListItem>
 
@@ -199,10 +230,10 @@ export default function WorkoutPage(){
 
 
                                         <ListItem  secondaryAction={ 
-                                                workoutDetails.program.tusday != null ?
+                                               workoutDetails.tuesday != null ?
                                                     <IconButton edge="end" aria-label="delete" onClick={()=>{
                                                         setDay("Tuesday");
-                                                        setExercices(workoutDetails.program.tusday.exercices); 
+                                                        setExercices(workoutDetails.tuesday); 
                                                         setNavigateToList(true);
 
                                                     }}>
@@ -213,11 +244,11 @@ export default function WorkoutPage(){
                                             }  > 
                                             <ListItemAvatar>
                                                 {
-                                                    workoutDetails.program.tusday == null ?
+                                                   workoutDetails.tuesday == null ?
                                                     <Interests  color="success" />
                                                     :
 
-                                                    workoutDetails.program.tusday.split == 'cardio' ?
+                                                   workoutDetails.tuesday.split == 'cardio' ?
                                                     <MonitorHeart  color="error" />:<FitnessCenter color="primary" />
 
                                                  
@@ -226,7 +257,7 @@ export default function WorkoutPage(){
                                             </ListItemAvatar>
                                             <ListItemText
                                             primary="Tuesday"
-                                            secondary={  workoutDetails.program.tusday != null ? workoutDetails.program.tusday.split  : 'Rest day' }
+                                            secondary={ workoutDetails.tuesday != null ?workoutDetails.tuesday.split  : 'Rest day' }
                                             />
                                         </ListItem>
 
@@ -245,10 +276,10 @@ export default function WorkoutPage(){
 
 
                                         <ListItem  secondaryAction={ 
-                                                workoutDetails.program.wensday != null ?
+                                               workoutDetails.wednesday != null ?
                                                     <IconButton edge="end" aria-label="delete" onClick={()=>{
                                                         setDay("Wednesday");
-                                                        setExercices(workoutDetails.program.wensday.exercices); 
+                                                        setExercices(workoutDetails.wednesday); 
                                                         setNavigateToList(true);
 
                                                     }}>
@@ -259,11 +290,11 @@ export default function WorkoutPage(){
                                             }  > 
                                             <ListItemAvatar>
                                                 {
-                                                    workoutDetails.program.wensday == null ?
+                                                   workoutDetails.wednesday == null ?
                                                     <Interests  color="success" />
                                                     :
 
-                                                    workoutDetails.program.wensday.split == 'cardio' ?
+                                                   workoutDetails.wednesday.split == 'cardio' ?
                                                     <MonitorHeart  color="error" />:<FitnessCenter color="primary" />
 
                                                  
@@ -272,7 +303,7 @@ export default function WorkoutPage(){
                                             </ListItemAvatar>
                                             <ListItemText
                                             primary="Wednesday"
-                                            secondary={  workoutDetails.program.wensday != null ? workoutDetails.program.wensday.split  : 'Rest day' }
+                                            secondary={ workoutDetails.wednesday != null ?workoutDetails.wednesday.split  : 'Rest day' }
                                             />
                                         </ListItem>
 
@@ -285,10 +316,10 @@ export default function WorkoutPage(){
 
 
                                         <ListItem  secondaryAction={ 
-                                                workoutDetails.program.thursday != null ?
+                                               workoutDetails.thursday != null ?
                                                     <IconButton edge="end" aria-label="delete" onClick={()=>{
-                                                        setDay("Thursday");
-                                                        setExercices(workoutDetails.program.thursday.exercices); 
+                                                        setDay("thursday");
+                                                        setExercices(workoutDetails.thursday); 
                                                         setNavigateToList(true);
                                                     }}>
                                              
@@ -298,11 +329,11 @@ export default function WorkoutPage(){
                                             }  > 
                                             <ListItemAvatar>
                                                 {
-                                                    workoutDetails.program.thursday == null ?
+                                                   workoutDetails.thursday == null ?
                                                     <Interests  color="success" />
                                                     :
 
-                                                    workoutDetails.program.thursday.split == 'cardio' ?
+                                                   workoutDetails.thursday.split == 'cardio' ?
                                                     <MonitorHeart  color="error" />:<FitnessCenter color="primary" />
 
                                                  
@@ -310,8 +341,8 @@ export default function WorkoutPage(){
                                             
                                             </ListItemAvatar>
                                             <ListItemText
-                                            primary="Thursday"
-                                            secondary={  workoutDetails.program.thursday != null ? workoutDetails.program.thursday.split  : 'Rest day' }
+                                            primary="thursday"
+                                            secondary={ workoutDetails.thursday != null ?workoutDetails.thursday.split  : 'Rest day' }
                                             />
                                         </ListItem>
                                         
@@ -323,10 +354,10 @@ export default function WorkoutPage(){
 
 
                                         <ListItem  secondaryAction={ 
-                                                workoutDetails.program.friday != null ?
+                                               workoutDetails.friday != null ?
                                                     <IconButton edge="end" aria-label="delete" onClick={()=>{
                                                         setDay("Friday");
-                                                        setExercices(workoutDetails.program.friday.exercices); 
+                                                        setExercices(workoutDetails.friday); 
                                                         setNavigateToList(true);
                                                     }}>
                                              
@@ -336,11 +367,11 @@ export default function WorkoutPage(){
                                             }  > 
                                             <ListItemAvatar>
                                                 {
-                                                    workoutDetails.program.friday == null ?
+                                                   workoutDetails.friday == null ?
                                                     <Interests  color="success" />
                                                     :
 
-                                                    workoutDetails.program.friday.split == 'cardio' ?
+                                                   workoutDetails.friday.split == 'cardio' ?
                                                     <MonitorHeart  color="error" />:<FitnessCenter color="primary" />
 
                                                  
@@ -349,7 +380,7 @@ export default function WorkoutPage(){
                                             </ListItemAvatar>
                                             <ListItemText
                                             primary="Friday"
-                                            secondary={  workoutDetails.program.friday != null ? workoutDetails.program.friday.split  : 'Rest day' }
+                                            secondary={ workoutDetails.friday != null ?workoutDetails.friday.split  : 'Rest day' }
                                             />
                                         </ListItem>
 
@@ -364,10 +395,10 @@ export default function WorkoutPage(){
 
 
                                         <ListItem  secondaryAction={ 
-                                                workoutDetails.program.saturday != null ?
+                                               workoutDetails.saturday != null ?
                                                     <IconButton edge="end" aria-label="delete" onClick={()=>{
                                                         setDay("Saturday");
-                                                        setExercices(workoutDetails.program.saturday.exercices); 
+                                                        setExercices(workoutDetails.saturday); 
                                                         setNavigateToList(true);
                                                     }}>
                                              
@@ -377,11 +408,11 @@ export default function WorkoutPage(){
                                             }  > 
                                             <ListItemAvatar>
                                                 {
-                                                    workoutDetails.program.saturday == null ?
+                                                   workoutDetails.saturday == null ?
                                                     <Interests  color="success" />
                                                     :
 
-                                                    workoutDetails.program.saturday.split == 'cardio' ?
+                                                   workoutDetails.saturday.split == 'cardio' ?
                                                     <MonitorHeart  color="error" />:<FitnessCenter color="primary" />
 
                                                  
@@ -390,7 +421,7 @@ export default function WorkoutPage(){
                                             </ListItemAvatar>
                                             <ListItemText
                                             primary="Saturday"
-                                            secondary={  workoutDetails.program.saturday != null ? workoutDetails.program.saturday.split  : 'Rest day' }
+                                            secondary={ workoutDetails.saturday != null ?workoutDetails.saturday.split  : 'Rest day' }
                                             />
                                         </ListItem>
 
@@ -403,10 +434,10 @@ export default function WorkoutPage(){
 
 
                                         <ListItem  secondaryAction={ 
-                                                workoutDetails.program.sanday != null ?
+                                               workoutDetails.sunday != null ?
                                                     <IconButton edge="end" aria-label="delete" onClick={()=>{
                                                         setDay("Sunday");
-                                                        setExercices(workoutDetails.program.sanday.exercices); 
+                                                        setExercices(workoutDetails.sunday); 
                                                         setNavigateToList(true);
                                                     }}>
                                              
@@ -416,11 +447,11 @@ export default function WorkoutPage(){
                                             }  > 
                                             <ListItemAvatar>
                                                 {
-                                                    workoutDetails.program.sanday == null ?
+                                                   workoutDetails.sunday == null ?
                                                     <Interests  color="success" />
                                                     :
 
-                                                    workoutDetails.program.sanday.split == 'cardio' ?
+                                                   workoutDetails.sunday.split == 'cardio' ?
                                                     <MonitorHeart  color="error" />:<FitnessCenter color="primary" />
 
                                                  
@@ -429,7 +460,7 @@ export default function WorkoutPage(){
                                             </ListItemAvatar>
                                             <ListItemText
                                             primary="Sunday"
-                                            secondary={  workoutDetails.program.sanday != null ? workoutDetails.program.sanday.split  : 'Rest day' }
+                                            secondary={ workoutDetails.sunday != null ?workoutDetails.sunday.split  : 'Rest day' }
                                             />
                                         </ListItem>
                                         
@@ -446,6 +477,47 @@ export default function WorkoutPage(){
 
                                         
                                     </List>
+
+
+ 
+
+                                    
+                                <div className="row mb-3">
+                                    <div className="col">
+                                        <TextField variant="outlined"  multiline={true} rows={5} className="w-100" label="Feedback" value={feedback}  onChange={(e)=>{setFeedBack(e.target.value)}} />
+                                    </div>
+                                </div>
+                                
+
+
+                                  
+                                <div className="mb-3">
+                                {
+                                        loading === false ?
+                                        <div className="mb-3">
+                                            <Button type='submit' onClick={()=>{
+                                                saveFeedBack();
+                                            }} disabled={ false } variant="contained" className='w-100' style={{borderRadius:'30px'}} >Save feedback</Button>
+                                        </div>
+                                        :
+                                        <div className="mb-3 text-center">
+                                            <p className="text-muted">Please wait, this may take a minute.</p>
+                                            <CircularProgress />
+                                        </div>
+
+                                }
+
+
+                                {
+                                    errorMessage !== '' ? <Alert severity="error">{errorMessage}</Alert> : null
+                                }
+                                {
+                                    successMessage !== '' ? <Alert severity="success">{successMessage}</Alert> : null
+                                }
+ 
+                                    
+                                     
+                               </div>
                                     
  
                                     

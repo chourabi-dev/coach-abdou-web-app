@@ -33,26 +33,24 @@ export default function ProfileEditPage(){
 
     const getUserData = function(){
         var myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("gympro-token", "yytgsfrahjuiplns2sutags4poshn1");
+        myHeaders.append("Content-Type", "application/json"); 
+        myHeaders.append("Authorization",  localStorage.getItem("token") ); 
         
-        var raw = JSON.stringify({"token":localStorage.getItem("token")});
         
         var requestOptions = {
-          method: 'POST',
-          headers: myHeaders,
-          body: raw,
+          method: 'GET',
+          headers: myHeaders, 
           redirect: 'follow'
         };
         
-        fetch(PUBLIC_URL+"/API/mobile/getUserData/index.php", requestOptions)
+        fetch(PUBLIC_URL+"/api/v1/get-member-data", requestOptions)
           .then(response => response.json())
           .then(result => {
             console.log(result); 
-            setUser(result.data)  
-            setEmail(result.data.email_member);
-            setFullname(result.data.fullname_member);
-            setPhone(result.data.phone_member);
+            setUser(result)  
+            setEmail(result.email);
+            setFullname(result.fullname);
+            setPhone(result.phone);
             
  
         
@@ -81,10 +79,10 @@ export default function ProfileEditPage(){
         setSuccessMessage("");
         
         var myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("gympro-token", "yytgsfrahjuiplns2sutags4poshn1");
-
-        var raw = JSON.stringify({"email":email,"fullname":fullname,"phone":phone,"token":localStorage.getItem('token')});
+        myHeaders.append("Content-Type", "application/json"); 
+        myHeaders.append("Authorization",  localStorage.getItem("token") ); 
+        
+        var raw = JSON.stringify({ "fullname":fullname,"phone":phone });
 
         var requestOptions = {
         method: 'POST',
@@ -93,7 +91,7 @@ export default function ProfileEditPage(){
         redirect: 'follow'
         };
 
-        fetch(PUBLIC_URL+"/API/mobile/update-account-infos/index.php", requestOptions)
+        fetch(PUBLIC_URL+"/api/v1/update-account-infos", requestOptions)
         .then(response => response.json())
         .then(result =>{
             if ( result.success === true ) {

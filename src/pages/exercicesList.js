@@ -28,25 +28,22 @@ export default function ExercicesList(props){
 
     const getUserData = function(){
         var myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("gympro-token", "yytgsfrahjuiplns2sutags4poshn1");
-        
-        var raw = JSON.stringify({"token":localStorage.getItem("token")});
+        myHeaders.append("Content-Type", "application/json"); 
+        myHeaders.append("Authorization",  localStorage.getItem("token") ); 
         
         var requestOptions = {
-          method: 'POST',
-          headers: myHeaders,
-          body: raw,
+          method: 'GET',
+          headers: myHeaders, 
           redirect: 'follow'
         };
         
-        fetch(PUBLIC_URL+"/API/mobile/getUserData/index.php", requestOptions)
+        fetch(PUBLIC_URL+"/api/v1/get-member-data", requestOptions)
           .then(response => response.json())
           .then(result => {
             console.log(result);
  
 
-            setUser(result.data)
+            setUser(result)
             
 
 
@@ -54,10 +51,10 @@ export default function ExercicesList(props){
         
         })
           .catch(error =>{
-            alert("Session expired");
+            /* alert("Session expired");
             
             localStorage.removeItem("token");
-            window.location="/";
+            window.location="/";*/
             
           }).finally(()=>{
             setIsLoading(false);
@@ -116,10 +113,10 @@ export default function ExercicesList(props){
                                                             
                                                             <div className="strong" style={{ textTransform:"capitalize" }}>
                                                                 <strong>{
-                                                                    data.exercice.title_exercice
+                                                                    data.exercice.title
                                                                 }</strong>
                                                                 {
-                                                                    data.superSet != null ?  <div> { data.superSet == true ? <div className="seper-set-badge"><small>super set</small></div>: null } </div>    :   null
+                                                                    data.super_set != null ?  <div> { data.super_set == 'true' ? <div className="seper-set-badge"><small>super set</small></div>: null } </div>    :   null
                                                                 }
                                                                 
                                                             </div>
@@ -136,12 +133,12 @@ export default function ExercicesList(props){
                                                     </p>
                                                     
                                                     <p className="text-muted" style={ {whiteSpace:"pre-line"} } >
-                                                        { data.exercice.instruction_exercice }
+                                                        { data.exercice.instructions }
                                                     </p>
                                                     {
-                                                        data.exercice.url  != null ? 
+                                                        data.exercice.vidoURL  != null ? 
                                                         <p>
-                                                            <a href={ data.exercice.url } target="_blank" className="text-primary" style={{textDecoration:'none'}}> Watch online video <YouTube color="secondary" /></a>
+                                                            <a href={ data.exercice.vidoURL } target="_blank" className="text-primary" style={{textDecoration:'none'}}> Watch online video <YouTube color="secondary" /></a>
                                                         </p>
                                                         :
                                                         null
